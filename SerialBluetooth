@@ -16,11 +16,13 @@ async def receive(reader):
         data = await reader.readuntil(b'\n')
         line = data
         # print(line)
+        print(line)
         try:
-            if line == b'frame\r\n':
+            if line == b'frame\n':
                 for x in range(0, 24):
                     for y in range(0, 32):
                         data = await reader.readuntil(b'\n')
+                        print(data)
                         heatMap[x][y] = data
             # print(heatMap[::-1])
             first = True
@@ -46,7 +48,7 @@ async def main(port, baudrate):
     await asyncio.wait([receiver])
 
 
-port='COM7'
+port='COM8'
 baudrate=74880
 
 loop = asyncio.get_event_loop()
