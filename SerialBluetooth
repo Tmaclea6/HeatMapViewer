@@ -1,0 +1,54 @@
+import asyncio
+import matplotlib.pyplot as plt
+import numpy as np
+import cv2 as cv
+import scipy.ndimage
+import serial_asyncio
+
+
+async def receive(reader):
+    heatMap = np.random.random((24, 32))
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    plt.show(block=False)
+    while True:
+        data = await reader.readuntil(b'\n')
+        line = data
+        # print(line)
+        try:
+            if line == b'frame\r\n':
+                for x in range(0, 24):
+                    for y in range(0, 32):
+                        data = await reader.readuntil(b'\n')
+                        heatMap[x][y] = data
+            # print(heatMap[::-1])
+            first = True
+            if first:
+                im = ax.imshow(heatMap[::-1])
+
+            # time.sleep(0.1)
+            # replace the image contents
+            k = 3
+            frame = cv.blur(heatMap[::-1], (k, k))
+            increaseRez = scipy.ndimage.zoom(frame, 3, order=1)
+            im.set_array(increaseRez)
+            # redraw the figure
+            fig.canvas.draw()
+        except:
+            fig.canvas.flush_events()
+        fig.canvas.flush_events()
+
+
+async def main(port, baudrate):
+    reader, _ = await serial_asyncio.open_serial_connection(url=port, baudrate=baudrate)
+    receiver = receive(reader)
+    await asyncio.wait([receiver])
+
+
+port='COM7'
+baudrate=74880
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main(port, baudrate))
+loop.close()
